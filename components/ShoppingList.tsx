@@ -12,10 +12,13 @@ interface Props {
 const COUPANG_PARTNER_ID = process.env.NEXT_PUBLIC_COUPANG_PARTNER_ID
 
 function coupangUrl(item: string) {
-  if (COUPANG_PARTNER_ID) {
-    return `https://www.coupang.com/np/search?q=${encodeURIComponent(item)}&rocketAll=false&sid=${COUPANG_PARTNER_ID}`
-  }
-  return `https://www.coupang.com/np/search?q=${encodeURIComponent(item)}`
+  const base = `https://www.coupang.com/np/search?q=${encodeURIComponent(item)}&rocketAll=false`
+  return COUPANG_PARTNER_ID ? `${base}&sid=${COUPANG_PARTNER_ID}` : base
+}
+
+function rocketFreshUrl() {
+  const base = 'https://www.coupang.com/np/categories/393760'
+  return COUPANG_PARTNER_ID ? `${base}?sid=${COUPANG_PARTNER_ID}` : base
 }
 
 export default function ShoppingList({ plan, onClose }: Props) {
@@ -114,6 +117,22 @@ export default function ShoppingList({ plan, onClose }: Props) {
           </div>
           <button onClick={onClose} className="text-[#B0A090] text-lg leading-none">×</button>
         </div>
+
+        {/* 로켓프레시 배너 */}
+        <a
+          href={rocketFreshUrl()}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mx-4 mt-3 mb-1 flex items-center gap-3 px-4 py-3 bg-[#FFF0EE] border-2 border-[#E84040] rounded-xl shadow-[2px_2px_0_#E84040] hover:shadow-[3px_3px_0_#E84040] transition-all group"
+          onClick={e => e.stopPropagation()}
+        >
+          <span className="text-2xl flex-shrink-0">🚀</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold text-[#E84040]">쿠팡 로켓프레시</p>
+            <p className="text-[10px] text-[#7A6855] mt-0.5">신선식품 새벽배송 · 오늘 주문하면 내일 아침 도착</p>
+          </div>
+          <span className="text-[#E84040] text-sm group-hover:translate-x-0.5 transition-transform flex-shrink-0">→</span>
+        </a>
 
         <div className="flex-1 overflow-y-auto px-4 py-3" style={{ minHeight: 0 }}>
           {/* 사야 할 것 */}
