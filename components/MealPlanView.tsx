@@ -262,7 +262,11 @@ export default function MealPlanView({ plan, isLoading, onBack, user, onLoginReq
     setSaving(true)
     try {
       const supabase = createClient()
-      const { error } = await supabase.from('meal_plans').insert({
+      // 현재 세션 확인
+      const { data: { session } } = await supabase.auth.getSession()
+      console.log('세션 유저ID:', session?.user?.id, '/ props 유저ID:', user.id)
+
+      const { data, error } = await supabase.from('meal_plans').insert({
         user_id: user.id,
         plan_data: plan,
         ingredients_used: plan.days.flatMap(d =>
@@ -270,10 +274,12 @@ export default function MealPlanView({ plan, isLoading, onBack, user, onLoginReq
         ).filter((v, i, a) => a.indexOf(v) === i),
       })
       if (error) {
-        console.error('저장 오류:', error)
-        alert(`저장 실패: ${error.message}\n\nSupabase SQL Editor에서 migrate.sql을 실행해주세요.`)
+        const detail = `code: ${error.code}\nmessage: ${error.message}\ndetails: ${error.details}\nhint: ${error.hint}`
+        console.error('저장 오류 상세:', detail)
+        alert(`저장 실패\n\n${detail}`)
         return
       }
+      console.log('저장 성공:', data)
       setSaved(true)
     } catch (e) {
       console.error(e)
