@@ -226,15 +226,22 @@ export default function MealPlanView({ plan, isLoading, onBack, user, onLoginReq
   // 즐겨찾기 Supabase 동기화
   const syncFavoritesToSupabase = useCallback(async (names: Set<string>, meal?: Meal) => {
     if (!user || !meal) return
-    const supabase = createClient()
-    if (names.has(meal.name)) {
-      await supabase.from('favorites').upsert({
-        user_id: user.id,
-        meal_name: meal.name,
-        meal_data: meal,
-      })
-    } else {
-      await supabase.from('favorites').delete().eq('user_id', user.id).eq('meal_name', meal.name)
+    try {
+      const supabase = createClient()
+      if (names.has(meal.name)) {
+        const { error } = await supabase.from('favorites').upsert({
+          user_id: user.id,
+          meal_name: meal.name,
+          meal_data: meal,
+        })
+        if (error) console.error('즐겨찾기 저장 오류:', error.message)
+      } else {
+        const { error } = await supabase.from('favorites').delete()
+          .eq('user_id', user.id).eq('meal_name', meal.name)
+        if (error) console.error('즐겨찾기 삭제 오류:', error.message)
+      }
+    } catch (e) {
+      console.error('즐겨찾기 동기화 실패:', e)
     }
   }, [user])
 
@@ -253,16 +260,27 @@ export default function MealPlanView({ plan, isLoading, onBack, user, onLoginReq
     if (!user) { onLoginRequired(); return }
     if (!plan) return
     setSaving(true)
-    const supabase = createClient()
-    await supabase.from('meal_plans').insert({
-      user_id: user.id,
-      plan_data: plan,
-      ingredients_used: plan.days.flatMap(d =>
-        [d.breakfast, d.lunch, d.dinner].flatMap(m => m.ingredients)
-      ).filter((v, i, a) => a.indexOf(v) === i),
-    })
-    setSaved(true)
-    setSaving(false)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.from('meal_plans').insert({
+        user_id: user.id,
+        plan_data: plan,
+        ingredients_used: plan.days.flatMap(d =>
+          [d.breakfast, d.lunch, d.dinner].flatMap(m => m.ingredients)
+        ).filter((v, i, a) => a.indexOf(v) === i),
+      })
+      if (error) {
+        console.error('저장 오류:', error)
+        alert(`저장 실패: ${error.message}\n\nSupabase SQL Editor에서 migrate.sql을 실행해주세요.`)
+        return
+      }
+      setSaved(true)
+    } catch (e) {
+      console.error(e)
+      alert('저장 중 오류가 발생했어요. 잠시 후 다시 시도해주세요.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   // 특정 요일 재생성
