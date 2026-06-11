@@ -21,6 +21,11 @@ html {
   -webkit-font-smoothing: antialiased;
 }
 
+/* 버튼·인풋은 브라우저 기본값이 시스템 폰트라 명시적으로 상속 */
+button, input, textarea, select, a {
+  font-family: inherit;
+}
+
 body {
   background-color: #F5F0E4;
   /* 연필 자국 같은 옅은 줄 — 스케치북 느낌 */
