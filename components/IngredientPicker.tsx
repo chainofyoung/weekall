@@ -40,7 +40,12 @@ export default function IngredientPicker({ selected, onSelect, onNext, user, onL
       .select('*')
       .order('category')
       .then(({ data, error }) => {
-        if (data && !error && data.length > 0) setIngredients(data as Ingredient[])
+        if (data && !error && data.length > 0) {
+          // 로컬 데이터(74개)를 기준으로, DB에만 있는 재료(커스텀 추가분)를 뒤에 합침
+          const localIds = new Set(INGREDIENTS_DATA.map(i => i.id))
+          const extra = (data as Ingredient[]).filter(i => !localIds.has(i.id))
+          if (extra.length > 0) setIngredients([...INGREDIENTS_DATA, ...extra])
+        }
       })
   }, [])
 
