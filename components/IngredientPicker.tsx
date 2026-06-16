@@ -242,19 +242,19 @@ export default function IngredientPicker({ selected, onSelect, onNext, user, onL
               })}
             </div>
           )}
+
+          {/* 광고 */}
+          <AdFitBanner
+            unitId={process.env.NEXT_PUBLIC_KAKAO_ADFIT_UNIT_ID_1}
+            width={300}
+            height={250}
+            className="mt-6"
+          />
         </div>
 
         {/* 하단 바 */}
         <div className="fixed bottom-0 left-0 right-0 bg-[#F5F0E4]/95 backdrop-blur-sm border-t-2 border-[#C8B99A] px-4 pt-3 safe-bottom">
           <div className="max-w-2xl mx-auto">
-            {/* 광고 */}
-            <AdFitBanner
-              unitId={process.env.NEXT_PUBLIC_KAKAO_ADFIT_UNIT_ID_1}
-              width={320}
-              height={50}
-              className="mb-3"
-            />
-
             {/* 선택된 재료 태그 */}
             {selected.length > 0 && (
               <div className="flex gap-2 overflow-x-auto pb-3" style={{ scrollbarWidth: 'none' }}>

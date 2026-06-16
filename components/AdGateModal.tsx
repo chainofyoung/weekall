@@ -36,8 +36,8 @@ export default function AdGateModal({ onConfirm, onClose }: Props) {
         <div className="px-5 py-4 bg-[#F5F0E4] flex flex-col items-center gap-3">
           <AdFitBanner
             unitId={process.env.NEXT_PUBLIC_KAKAO_ADFIT_UNIT_ID_1}
-            width={320}
-            height={100}
+            width={300}
+            height={250}
           />
           {/* 카운트다운 */}
           <div className="flex items-center gap-2">

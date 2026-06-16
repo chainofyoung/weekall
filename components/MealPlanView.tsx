@@ -517,8 +517,8 @@ export default function MealPlanView({ plan, isLoading, onBack, user, onLoginReq
 
                 <AdFitBanner
                   unitId={process.env.NEXT_PUBLIC_KAKAO_ADFIT_UNIT_ID_1}
-                  width={320}
-                  height={50}
+                  width={300}
+                  height={250}
                   className="mt-4"
                 />
               </div>
