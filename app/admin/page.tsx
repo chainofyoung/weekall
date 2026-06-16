@@ -28,6 +28,18 @@ interface Stats {
   favorites: number
 }
 
+interface AdminUser {
+  id: string
+  email: string | null
+  provider: string
+  created_at: string
+  last_sign_in_at: string | null
+  goal: string | null
+  activity_level: string | null
+}
+
+const GOAL_LABEL: Record<string, string> = { lose: '가볍게', maintain: '균형있게', bulk: '든든하게' }
+
 export default function AdminPage() {
   const [authed, setAuthed] = useState(false)
   const [checkingSession, setCheckingSession] = useState(true)
@@ -39,6 +51,9 @@ export default function AdminPage() {
   const [stats, setStats] = useState<Stats>({ users: 0, plans: 0, requests: 0, favorites: 0 })
   const [newIngredient, setNewIngredient] = useState({ name: '', emoji: '', category: 'vegetable' })
   const [addStatus, setAddStatus] = useState<string | null>(null)
+  const [showUserList, setShowUserList] = useState(false)
+  const [users, setUsers] = useState<AdminUser[]>([])
+  const [usersLoading, setUsersLoading] = useState(false)
 
   useEffect(() => {
     adminFetch('/api/admin?type=stats')
@@ -72,6 +87,15 @@ export default function AdminPage() {
     const data = await res.json()
     if (data.users !== undefined) setStats(data)
   }, [])
+
+  async function openUserList() {
+    setShowUserList(true)
+    setUsersLoading(true)
+    const res = await adminFetch('/api/admin?type=users')
+    const data = await res.json()
+    if (Array.isArray(data)) setUsers(data)
+    setUsersLoading(false)
+  }
 
   useEffect(() => {
     if (authed) {
@@ -248,16 +272,22 @@ export default function AdminPage() {
           <div>
             <div className="grid grid-cols-2 gap-3 mb-6">
               {[
-                { label: '전체 사용자', value: stats.users, emoji: '👤' },
+                { label: '전체 사용자', value: stats.users, emoji: '👤', onClick: openUserList },
                 { label: '생성된 식단', value: stats.plans, emoji: '🍱' },
                 { label: '재료 건의', value: stats.requests, emoji: '💬' },
                 { label: '즐겨찾기', value: stats.favorites, emoji: '❤️' },
               ].map(s => (
-                <div key={s.label} className="bg-[#FFFDF6] rounded-2xl border-2 border-[#C8B99A] p-5 shadow-[2px_2px_0_#C8B99A]">
+                <button
+                  key={s.label}
+                  onClick={s.onClick}
+                  disabled={!s.onClick}
+                  className={`text-left bg-[#FFFDF6] rounded-2xl border-2 border-[#C8B99A] p-5 shadow-[2px_2px_0_#C8B99A] transition-colors
+                    ${s.onClick ? 'hover:border-[#E84040] cursor-pointer' : ''}`}
+                >
                   <p className="text-3xl mb-2">{s.emoji}</p>
                   <p className="text-3xl font-bold text-[#1E1810]">{s.value.toLocaleString()}</p>
-                  <p className="text-sm text-[#B0A090] mt-1">{s.label}</p>
-                </div>
+                  <p className="text-sm text-[#B0A090] mt-1">{s.label}{s.onClick ? ' →' : ''}</p>
+                </button>
               ))}
             </div>
 
@@ -351,6 +381,47 @@ export default function AdminPage() {
           </div>
         )}
       </div>
+
+      {showUserList && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4"
+          onClick={() => setShowUserList(false)}
+        >
+          <div
+            className="w-full max-w-2xl max-h-[80vh] bg-[#FFFDF6] rounded-2xl border-2 border-[#C8B99A] shadow-[4px_4px_0_#C8B99A] flex flex-col overflow-hidden"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="px-5 py-4 border-b-2 border-[#E8DFD0] flex items-center justify-between flex-shrink-0">
+              <h2 className="text-base font-bold text-[#1E1810]">전체 사용자 ({users.length})</h2>
+              <button onClick={() => setShowUserList(false)} className="text-[#B0A090] text-sm hover:text-[#7A6855]">닫기 ✕</button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
+              {usersLoading ? (
+                <p className="text-center text-[#B0A090] py-12">불러오는 중...</p>
+              ) : users.length === 0 ? (
+                <p className="text-center text-[#B0A090] py-12">사용자가 없어요</p>
+              ) : (
+                users.map(u => (
+                  <div key={u.id} className="flex items-center justify-between gap-3 py-3 border-b border-[#E8DFD0] last:border-0">
+                    <div className="min-w-0">
+                      <p className="font-bold text-[#1E1810] truncate">{u.email ?? '(이메일 없음)'}</p>
+                      <p className="text-xs text-[#B0A090]">
+                        {u.provider} · 가입 {new Date(u.created_at).toLocaleDateString('ko-KR')}
+                        {u.last_sign_in_at && ` · 최근 로그인 ${new Date(u.last_sign_in_at).toLocaleDateString('ko-KR')}`}
+                      </p>
+                    </div>
+                    {u.goal && (
+                      <span className="flex-shrink-0 text-xs font-bold px-2.5 py-1 rounded-full bg-[#FFF0EE] text-[#E84040] border border-[#E84040]">
+                        {GOAL_LABEL[u.goal] ?? u.goal}
+                      </span>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

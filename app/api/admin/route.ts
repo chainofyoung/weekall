@@ -44,6 +44,31 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(data)
   }
 
+  if (type === 'users') {
+    const { data, error } = await supabase.auth.admin.listUsers({ perPage: 1000 })
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, goal, activity_level, created_at')
+
+    const profileMap = new Map((profiles ?? []).map(p => [p.id, p]))
+
+    const users = data.users
+      .map(u => ({
+        id: u.id,
+        email: u.email,
+        provider: u.app_metadata?.provider ?? 'email',
+        created_at: u.created_at,
+        last_sign_in_at: u.last_sign_in_at,
+        goal: profileMap.get(u.id)?.goal ?? null,
+        activity_level: profileMap.get(u.id)?.activity_level ?? null,
+      }))
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+    return NextResponse.json(users)
+  }
+
   return NextResponse.json({ error: 'invalid type' }, { status: 400 })
 }
 
