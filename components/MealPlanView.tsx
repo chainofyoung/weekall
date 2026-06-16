@@ -548,7 +548,7 @@ export default function MealPlanView({ plan, isLoading, onBack, user, onLoginReq
 
           {/* 장보기 목록 모달 */}
           {showShopping && (
-            <ShoppingList plan={plan} onClose={() => setShowShopping(false)} />
+            <ShoppingList plan={plan} selectedIngredients={ingredients} onClose={() => setShowShopping(false)} />
           )}
         </>
       ) : null}

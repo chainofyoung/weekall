@@ -6,6 +6,7 @@ import { WeeklyMealPlan } from '@/types'
 interface Props {
   plan: WeeklyMealPlan
   onClose: () => void
+  selectedIngredients?: import('@/types').UserIngredient[]
 }
 
 // 쿠팡 파트너스 ID: .env.local에 NEXT_PUBLIC_COUPANG_PARTNER_ID=your_id 설정
@@ -21,21 +22,24 @@ function rocketFreshUrl() {
   return COUPANG_PARTNER_ID ? `${base}?sid=${COUPANG_PARTNER_ID}` : base
 }
 
-export default function ShoppingList({ plan, onClose }: Props) {
+export default function ShoppingList({ plan, onClose, selectedIngredients }: Props) {
   const [checked, setChecked] = useState<Set<string>>(new Set())
   const [copied, setCopied] = useState(false)
   const [fridgeNames, setFridgeNames] = useState<Set<string>>(new Set())
 
-  // 냉장고에 있는 재료 목록 로드
+  // 냉장고에 있는 재료 + 이번 세션에서 선택한 재료 합산
   useEffect(() => {
+    const names = new Set<string>()
     try {
       const saved = localStorage.getItem('weekall_fridge')
       if (saved) {
         const items: { name: string }[] = JSON.parse(saved)
-        setFridgeNames(new Set(items.map(i => i.name)))
+        items.forEach(i => names.add(i.name))
       }
     } catch {}
-  }, [])
+    selectedIngredients?.forEach(ui => names.add(ui.ingredient.name))
+    setFridgeNames(names)
+  }, [selectedIngredients])
 
   // 식단에서 모든 재료 추출 (중복 제거)
   const allIngredients = useMemo(() => {
