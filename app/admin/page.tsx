@@ -1,10 +1,17 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
 
 const ADMIN_ID = 'choi'
 const ADMIN_PW = '1111'
+const ADMIN_TOKEN = 'choi:1111'
+
+function adminFetch(url: string, options?: RequestInit) {
+  return fetch(url, {
+    ...options,
+    headers: { 'x-admin-token': ADMIN_TOKEN, 'Content-Type': 'application/json', ...options?.headers },
+  })
+}
 
 interface IngredientRequest {
   id: string
@@ -46,33 +53,15 @@ export default function AdminPage() {
   }
 
   const loadRequests = useCallback(async () => {
-    const supabase = createClient()
-    const { data } = await supabase
-      .from('ingredient_requests')
-      .select('*')
-      .order('created_at', { ascending: false })
-    if (data) setRequests(data as IngredientRequest[])
+    const res = await adminFetch('/api/admin?type=requests')
+    const data = await res.json()
+    if (Array.isArray(data)) setRequests(data as IngredientRequest[])
   }, [])
 
   const loadStats = useCallback(async () => {
-    const supabase = createClient()
-    const [
-      { count: users },
-      { count: plans },
-      { count: requests },
-      { count: favorites },
-    ] = await Promise.all([
-      supabase.from('profiles').select('*', { count: 'exact', head: true }),
-      supabase.from('meal_plans').select('*', { count: 'exact', head: true }),
-      supabase.from('ingredient_requests').select('*', { count: 'exact', head: true }),
-      supabase.from('favorites').select('*', { count: 'exact', head: true }),
-    ])
-    setStats({
-      users: users ?? 0,
-      plans: plans ?? 0,
-      requests: requests ?? 0,
-      favorites: favorites ?? 0,
-    })
+    const res = await adminFetch('/api/admin?type=stats')
+    const data = await res.json()
+    if (data.users !== undefined) setStats(data)
   }, [])
 
   useEffect(() => {
@@ -83,34 +72,23 @@ export default function AdminPage() {
   }, [authed, loadRequests, loadStats])
 
   async function handleRequestStatus(id: string, status: 'approved' | 'rejected') {
-    const supabase = createClient()
-    await supabase.from('ingredient_requests').update({ status }).eq('id', id)
+    const req = requests.find(r => r.id === id)
+    await adminFetch('/api/admin', {
+      method: 'PATCH',
+      body: JSON.stringify({ id, status, name: req?.name, emoji: req?.emoji, category: req?.category }),
+    })
     setRequests(prev => prev.map(r => r.id === id ? { ...r, status } : r))
-
-    if (status === 'approved') {
-      const req = requests.find(r => r.id === id)
-      if (req) {
-        await supabase.from('ingredients').insert({
-          id: `req_${id}`,
-          name: req.name,
-          emoji: req.emoji,
-          category: req.category,
-        })
-      }
-    }
   }
 
   async function handleAddIngredient() {
     if (!newIngredient.name.trim() || !newIngredient.emoji.trim()) return
-    const supabase = createClient()
-    const { error } = await supabase.from('ingredients').insert({
-      id: `admin_${Date.now()}`,
-      name: newIngredient.name.trim(),
-      emoji: newIngredient.emoji.trim(),
-      category: newIngredient.category,
+    const res = await adminFetch('/api/admin', {
+      method: 'POST',
+      body: JSON.stringify(newIngredient),
     })
-    if (error) {
-      setAddStatus(`오류: ${error.message}`)
+    const data = await res.json()
+    if (data.error) {
+      setAddStatus(`오류: ${data.error}`)
     } else {
       setAddStatus(`✓ '${newIngredient.name}' 추가됨`)
       setNewIngredient({ name: '', emoji: '', category: 'vegetable' })
