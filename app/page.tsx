@@ -115,6 +115,8 @@ export default function Home() {
         <GoalSelector
           onBack={() => setStep('ingredients')}
           onGenerate={handleGenerate}
+          user={user}
+          onLoginRequired={() => setShowAuth(true)}
         />
       )}
       {step === 'result' && (
