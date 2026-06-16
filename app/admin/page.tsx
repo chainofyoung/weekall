@@ -2,14 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react'
 
-const ADMIN_ID = 'choi'
-const ADMIN_PW = '1111'
-const ADMIN_TOKEN = 'choi:1111'
-
 function adminFetch(url: string, options?: RequestInit) {
   return fetch(url, {
     ...options,
-    headers: { 'x-admin-token': ADMIN_TOKEN, 'Content-Type': 'application/json', ...options?.headers },
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
   })
 }
 
@@ -33,6 +30,7 @@ interface Stats {
 
 export default function AdminPage() {
   const [authed, setAuthed] = useState(false)
+  const [checkingSession, setCheckingSession] = useState(true)
   const [loginId, setLoginId] = useState('')
   const [loginPw, setLoginPw] = useState('')
   const [loginError, setLoginError] = useState(false)
@@ -42,9 +40,20 @@ export default function AdminPage() {
   const [newIngredient, setNewIngredient] = useState({ name: '', emoji: '', category: 'vegetable' })
   const [addStatus, setAddStatus] = useState<string | null>(null)
 
-  function handleLogin(e: React.FormEvent) {
+  useEffect(() => {
+    adminFetch('/api/admin?type=stats')
+      .then(res => { if (res.ok) setAuthed(true) })
+      .finally(() => setCheckingSession(false))
+  }, [])
+
+  async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
-    if (loginId === ADMIN_ID && loginPw === ADMIN_PW) {
+    const res = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: loginId, password: loginPw }),
+    })
+    if (res.ok) {
       setAuthed(true)
       setLoginError(false)
     } else {
@@ -94,6 +103,14 @@ export default function AdminPage() {
       setNewIngredient({ name: '', emoji: '', category: 'vegetable' })
     }
     setTimeout(() => setAddStatus(null), 3000)
+  }
+
+  if (checkingSession) {
+    return (
+      <div className="min-h-dvh flex items-center justify-center">
+        <p className="text-[#B0A090]">불러오는 중...</p>
+      </div>
+    )
   }
 
   if (!authed) {

@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const ADMIN_TOKEN = 'choi:1111'
-
 function getServiceClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -11,7 +9,8 @@ function getServiceClient() {
 }
 
 function isAuthed(req: NextRequest) {
-  return req.headers.get('x-admin-token') === ADMIN_TOKEN
+  const session = req.cookies.get('admin_session')?.value
+  return !!session && session === process.env.ADMIN_SESSION_SECRET
 }
 
 // GET /api/admin?type=stats|requests
