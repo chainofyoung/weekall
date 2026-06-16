@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
-import { Gaegu } from 'next/font/google'
+import { Jua } from 'next/font/google'
 import './globals.css'
 
-const gaegu = Gaegu({
+const jua = Jua({
   subsets: ['latin'],
-  weight: ['300', '400', '700'],
-  variable: '--font-gaegu',
+  weight: '400',
+  variable: '--font-jua',
   display: 'swap',
 })
 
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko" className={gaegu.variable}>
+    <html lang="ko" className={jua.variable}>
       <body>{children}</body>
     </html>
   )

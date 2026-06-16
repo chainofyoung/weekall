@@ -47,15 +47,15 @@ function MealCard({
       <div className="px-4 py-3.5 flex items-start gap-2">
         {/* 메인 콘텐츠 (탭해서 열기) */}
         <button className="flex-1 min-w-0 text-left" onClick={() => setOpen(!open)}>
-          <p className="serif text-[#1E1810] text-sm leading-snug">{meal.name}</p>
-          <p className="text-[#B0A090] text-[11px] mt-0.5 truncate">{meal.description}</p>
+          <p className="text-[#1E1810] text-base leading-snug">{meal.name}</p>
+          <p className="text-[#B0A090] text-sm mt-0.5 truncate">{meal.description}</p>
           {meal.portionGuide && (
-            <p className="text-[11px] text-[#E84040] mt-1 font-bold">🍽 {meal.portionGuide}</p>
+            <p className="text-sm text-[#E84040] mt-1 font-bold">🍽 {meal.portionGuide}</p>
           )}
           <div className="flex items-center gap-2 mt-2">
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${diff.bg}`}>{diff.label}</span>
-            <span className="text-[10px] text-[#B0A090]">⏱ {meal.cookTime}분</span>
-            <span className="text-[10px] text-[#B0A090]">~{meal.calories}kcal</span>
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${diff.bg}`}>{diff.label}</span>
+            <span className="text-xs text-[#B0A090]">⏱ {meal.cookTime}분</span>
+            <span className="text-xs text-[#B0A090]">~{meal.calories}kcal</span>
           </div>
         </button>
 
@@ -87,7 +87,7 @@ function MealCard({
           <p className="text-[10px] font-bold text-[#B0A090] uppercase tracking-widest mb-2">만드는 법</p>
           <ol className="flex flex-col gap-2 mb-4">
             {meal.recipe.map((step, i) => (
-              <li key={i} className="flex gap-2.5 text-[12px] text-[#4A3F32] leading-relaxed">
+              <li key={i} className="flex gap-2.5 text-sm text-[#4A3F32] leading-relaxed">
                 <span className="flex-shrink-0 w-4 h-4 rounded-full bg-[#E84040] text-white text-[9px] flex items-center justify-center font-bold mt-0.5">{i + 1}</span>
                 <span>{step.replace(/^\d+\.\s*/, '')}</span>
               </li>
@@ -129,9 +129,9 @@ function DayView({
     <div className="flex flex-col gap-4">
       {MEAL_SLOTS.map(({ key, label, emoji }) => (
         <div key={key}>
-          <div className="flex items-center gap-1.5 mb-2">
-            <span className="text-sm">{emoji}</span>
-            <span className="text-xs font-semibold text-[#6B7280]">{label}</span>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-base">{emoji}</span>
+            <span className="text-sm font-bold text-[#7A6855]">{label}</span>
           </div>
           <MealCard
             meal={day[key]}
@@ -361,19 +361,17 @@ export default function MealPlanView({ plan, isLoading, onBack, user, onLoginReq
 
   return (
     <div className="min-h-dvh flex flex-col">
-      {/* 헤더 — 고정 로고 아래 공간 확보 */}
-      <div className="px-5 pt-16 pb-4 max-w-5xl mx-auto w-full">
-        <div className="flex items-center mb-4">
-          <button onClick={onBack} className="text-[#B0A090] text-sm flex items-center gap-1 hover:text-[#7A6855] transition-colors">
-            ← 처음으로
-          </button>
-        </div>
+      {/* 헤더 */}
+      <div className="px-4 pt-20 pb-4 max-w-2xl mx-auto w-full">
+        <button onClick={onBack} className="text-[#B0A090] text-sm flex items-center gap-1 hover:text-[#7A6855] transition-colors mb-3">
+          ← 처음으로
+        </button>
         <div className="flex items-end justify-between mb-1">
           <div>
-            <span className="text-[11px] font-bold text-[#E84040] tracking-widest uppercase block mb-1">STEP 3 / 3</span>
-            <h1 className="serif text-2xl text-[#1E1810]">나의 일주일 식단</h1>
+            <span className="text-xs font-bold text-[#E84040] tracking-widest uppercase block mb-1">STEP 3 / 3</span>
+            <h1 className="text-2xl text-[#1E1810]">나의 일주일 식단</h1>
             <p className="text-[#7A6855] text-sm mt-0.5">
-              {viewMode === 'list' ? '요일을 탭해서 식단을 확인하세요' : '전체 주간 식단 한눈에 보기'}
+              {viewMode === 'list' ? '요일 탭해서 식단 확인' : '주간 식단 한눈에 보기'}
             </p>
           </div>
 
@@ -435,7 +433,7 @@ export default function MealPlanView({ plan, isLoading, onBack, user, onLoginReq
           {viewMode === 'list' ? (
             <>
               {/* 요일 탭 */}
-              <div className="px-5 mb-4 max-w-5xl mx-auto w-full">
+              <div className="px-4 mb-4 max-w-2xl mx-auto w-full">
                 <div className="grid grid-cols-7 gap-1.5">
                   {plan.days.map((day, i) => (
                     <button
@@ -456,7 +454,7 @@ export default function MealPlanView({ plan, isLoading, onBack, user, onLoginReq
               </div>
 
               {/* 식단 카드 */}
-              <div className="flex-1 px-5 pb-40 overflow-y-auto max-w-5xl mx-auto w-full">
+              <div className="flex-1 px-4 pb-40 overflow-y-auto max-w-2xl mx-auto w-full">
                 {/* 재생성 버튼 */}
                 {ingredients && preference && (
                   <div className="flex items-center justify-between mb-3">
@@ -526,21 +524,21 @@ export default function MealPlanView({ plan, isLoading, onBack, user, onLoginReq
               </div>
             </>
           ) : (
-            <div className="flex-1 px-5 pb-32 overflow-y-auto max-w-5xl mx-auto w-full">
+            <div className="flex-1 px-4 pb-32 overflow-y-auto max-w-2xl mx-auto w-full">
               <CalendarView days={plan.days} onSelectDay={handleCalendarSelect} />
-              <p className="text-center text-[11px] text-[#9CA3AF] mt-4">셀을 탭하면 해당 날짜 상세 식단으로 이동해요</p>
+              <p className="text-center text-xs text-[#9CA3AF] mt-4">셀을 탭하면 해당 날짜 상세 식단으로 이동해요</p>
             </div>
           )}
 
           {/* 있으면 좋을 재료 (하단 바) */}
           {plan.missingIngredients?.length > 0 && (
-            <div className="fixed bottom-0 left-0 right-0 bg-[#F5F0E4]/95 backdrop-blur-sm border-t-2 border-[#C8B99A] px-5 py-3 z-10">
-              <p className="text-[10px] font-bold text-[#B0A090] uppercase tracking-widest mb-2">
+            <div className="fixed bottom-0 left-0 right-0 bg-[#F5F0E4]/95 backdrop-blur-sm border-t-2 border-[#C8B99A] px-4 pt-3 safe-bottom z-10">
+              <p className="text-xs font-bold text-[#B0A090] uppercase tracking-widest mb-2">
                 🛒 더 있으면 좋을 재료
               </p>
-              <div className="flex gap-2 overflow-x-auto max-w-5xl mx-auto" style={{ scrollbarWidth: 'none' }}>
+              <div className="flex gap-2 overflow-x-auto max-w-2xl mx-auto" style={{ scrollbarWidth: 'none' }}>
                 {plan.missingIngredients.map((item, i) => (
-                  <span key={i} className="flex-shrink-0 text-xs px-3 py-1.5 bg-[#FFFDF6] border border-[#C8B99A] rounded-full text-[#4A3F32] shadow-[1px_1px_0_#C8B99A]">
+                  <span key={i} className="flex-shrink-0 text-sm px-3 py-1.5 bg-[#FFFDF6] border-2 border-[#C8B99A] rounded-full text-[#4A3F32] shadow-[1px_1px_0_#C8B99A]">
                     {item}
                   </span>
                 ))}

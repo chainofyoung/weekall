@@ -9,7 +9,7 @@
   --color-subtle: #B0A090;
   --color-accent: #E84040;
   --color-accent-light: #FFF0EE;
-  --font-gaegu: var(--font-gaegu);
+  --font-jua: var(--font-jua);
 }
 
 * {
@@ -17,28 +17,26 @@
 }
 
 html {
-  font-family: var(--font-gaegu), 'Gaegu', cursive;
+  font-family: var(--font-jua), 'Jua', sans-serif;
   -webkit-font-smoothing: antialiased;
+  font-size: 16px;
 }
 
-/* 버튼·인풋은 브라우저 기본값이 시스템 폰트라 명시적으로 상속 */
 button, input, textarea, select, a {
   font-family: inherit;
 }
 
 body {
   background-color: #F5F0E4;
-  /* 연필 자국 같은 옅은 줄 — 스케치북 느낌 */
   background-image: repeating-linear-gradient(
     0deg,
     transparent,
-    transparent 27px,
-    rgba(150, 120, 75, 0.09) 27px,
-    rgba(150, 120, 75, 0.09) 28px
+    transparent 31px,
+    rgba(150, 120, 75, 0.07) 31px,
+    rgba(150, 120, 75, 0.07) 32px
   );
   color: #1E1810;
   min-height: 100dvh;
-  letter-spacing: -0.01em;
 }
 
 /* 스크롤바 */
@@ -46,31 +44,32 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #C8B99A; border-radius: 2px; }
 
-/* 손글씨처럼 굵은 레이블 */
+/* Jua는 기본이 굵어서 serif 클래스도 동일 폰트 사용 */
 .serif {
-  font-family: var(--font-gaegu), 'Gaegu', cursive;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-family: var(--font-jua), 'Jua', sans-serif;
 }
 
-/* 스케치 카드 — 연필로 그린 사각형 느낌 */
 .sketch-card {
   background: #FFFDF6;
-  border: 1.5px solid #C8B99A;
-  box-shadow: 2px 2px 0 0 #C8B99A;
-  border-radius: 10px;
+  border: 2px solid #C8B99A;
+  box-shadow: 3px 3px 0 0 #C8B99A;
+  border-radius: 14px;
 }
 
-/* 스케치 버튼 (primary) */
 .sketch-btn-primary {
   background: #1E1810;
   color: #FFFDF6;
-  border: 1.5px solid #1E1810;
+  border: 2px solid #1E1810;
   box-shadow: 3px 3px 0 0 #8A7860;
-  border-radius: 10px;
+  border-radius: 14px;
   transition: box-shadow 0.1s, transform 0.1s;
 }
 .sketch-btn-primary:active {
   box-shadow: 1px 1px 0 0 #8A7860;
   transform: translate(2px, 2px);
+}
+
+/* iPhone 홈 인디케이터 safe area */
+.safe-bottom {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }

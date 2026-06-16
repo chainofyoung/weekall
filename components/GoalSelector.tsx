@@ -3,16 +3,16 @@
 import { useState } from 'react'
 import { UserPreference, DietGoal } from '@/types'
 
-const GOALS: { key: DietGoal; label: string; desc: string; kcal: string }[] = [
-  { key: 'lose',     label: '가볍게',   desc: '저칼로리 위주',  kcal: '~1,500 kcal' },
-  { key: 'maintain', label: '균형있게', desc: '탄단지 균형',    kcal: '~1,800 kcal' },
-  { key: 'bulk',     label: '든든하게', desc: '고단백 위주',    kcal: '~2,200 kcal' },
+const GOALS: { key: DietGoal; label: string; desc: string; kcal: string; emoji: string }[] = [
+  { key: 'lose',     label: '가볍게',   desc: '저칼로리 위주',  kcal: '~1,500 kcal', emoji: '🥗' },
+  { key: 'maintain', label: '균형있게', desc: '탄단지 균형',    kcal: '~1,800 kcal', emoji: '🍱' },
+  { key: 'bulk',     label: '든든하게', desc: '고단백 위주',    kcal: '~2,200 kcal', emoji: '💪' },
 ]
 
-const ACTIVITY: { key: UserPreference['activityLevel']; label: string; desc: string }[] = [
-  { key: 'low',    label: '적음', desc: '주로 앉아있어요' },
-  { key: 'medium', label: '보통', desc: '주 2~3회 운동' },
-  { key: 'high',   label: '많음', desc: '매일 운동해요' },
+const ACTIVITY: { key: UserPreference['activityLevel']; label: string; desc: string; emoji: string }[] = [
+  { key: 'low',    label: '적음', desc: '주로 앉아있어요', emoji: '🪑' },
+  { key: 'medium', label: '보통', desc: '주 2~3회 운동',   emoji: '🚶' },
+  { key: 'high',   label: '많음', desc: '매일 운동해요',   emoji: '🏃' },
 ]
 
 interface Props {
@@ -25,7 +25,6 @@ export default function GoalSelector({ onBack, onGenerate }: Props) {
   const [activityLevel, setActivityLevel] = useState<UserPreference['activityLevel']>('medium')
   const [favCount, setFavCount] = useState(0)
 
-  // 즐겨찾기 개수 로드
   useState(() => {
     try {
       const local = localStorage.getItem('weekall_favorites')
@@ -35,44 +34,41 @@ export default function GoalSelector({ onBack, onGenerate }: Props) {
 
   return (
     <div className="min-h-dvh flex flex-col">
-      {/* 헤더 — 고정 로고 아래 공간 확보 */}
-      <div className="px-5 pt-16 pb-5 max-w-2xl mx-auto w-full">
-        <button onClick={onBack} className="text-[#B0A090] text-sm mb-5 flex items-center gap-1 hover:text-[#7A6855] transition-colors">
+      <div className="px-4 pt-20 pb-4 max-w-2xl mx-auto w-full">
+        <button onClick={onBack} className="text-[#B0A090] text-sm mb-4 flex items-center gap-1 hover:text-[#7A6855] transition-colors">
           ← 재료 다시 선택
         </button>
-        <span className="text-[11px] font-bold text-[#E84040] tracking-widest uppercase block mb-2">STEP 2 / 3</span>
-        <h1 className="serif text-2xl text-[#1E1810] mb-1">목표 설정</h1>
-        <p className="text-[#7A6855] text-sm">어떻게 먹고 싶으세요?</p>
+        <span className="text-xs font-bold text-[#E84040] tracking-widest uppercase block mb-2">STEP 2 / 3</span>
+        <h1 className="text-2xl text-[#1E1810] mb-0.5">목표 설정</h1>
+        <p className="text-sm text-[#7A6855]">어떻게 먹고 싶으세요?</p>
       </div>
 
-      <div className="flex-1 px-5 overflow-y-auto pb-8 max-w-2xl mx-auto w-full">
-        {/* 식단 목표 */}
+      <div className="flex-1 px-4 overflow-y-auto pb-8 max-w-2xl mx-auto w-full">
         <p className="text-xs font-bold text-[#B0A090] uppercase tracking-widest mb-3">식단 목표</p>
-        <div className="flex flex-col gap-2 mb-8">
+        <div className="flex flex-col gap-3 mb-8">
           {GOALS.map((g) => (
             <button
               key={g.key}
               onClick={() => setGoal(g.key)}
-              className={`flex items-center px-4 py-4 rounded-xl border-2 text-left transition-all
+              className={`flex items-center px-5 py-4 rounded-2xl border-2 text-left transition-all
                 ${goal === g.key
-                  ? 'border-[#E84040] bg-[#FFFDF6] shadow-[3px_3px_0_#E84040]'
-                  : 'border-[#C8B99A] bg-[#FFFDF6] shadow-[1px_1px_0_#C8B99A]'
+                  ? 'border-[#E84040] bg-[#FFF0EE] shadow-[3px_3px_0_#E84040]'
+                  : 'border-[#C8B99A] bg-[#FFFDF6] shadow-[2px_2px_0_#C8B99A]'
                 }`}
             >
+              <span className="text-3xl mr-4 flex-shrink-0">{g.emoji}</span>
               <div className="flex-1">
                 <div className="flex items-baseline gap-2">
-                  <span className={`serif text-base ${goal === g.key ? 'text-[#E84040]' : 'text-[#1E1810]'}`}>
-                    {g.label}
-                  </span>
-                  <span className="text-[#B0A090] text-xs">{g.desc}</span>
+                  <span className={`text-lg ${goal === g.key ? 'text-[#E84040]' : 'text-[#1E1810]'}`}>{g.label}</span>
+                  <span className="text-[#B0A090] text-sm">{g.desc}</span>
                 </div>
-                <span className="text-[11px] text-[#B0A090] mt-0.5 block">{g.kcal}</span>
+                <span className="text-xs text-[#B0A090] mt-0.5 block">{g.kcal}</span>
               </div>
-              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0
+              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0
                 ${goal === g.key ? 'border-[#E84040] bg-[#E84040]' : 'border-[#C8B99A]'}`}>
                 {goal === g.key && (
-                  <svg width="8" height="6" viewBox="0 0 8 6" fill="none">
-                    <path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
+                    <path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 )}
               </div>
@@ -80,38 +76,34 @@ export default function GoalSelector({ onBack, onGenerate }: Props) {
           ))}
         </div>
 
-        {/* 활동량 */}
         <p className="text-xs font-bold text-[#B0A090] uppercase tracking-widest mb-3">활동량</p>
-        <div className="grid grid-cols-3 gap-2 mb-8">
+        <div className="grid grid-cols-3 gap-3 mb-8">
           {ACTIVITY.map((a) => (
             <button
               key={a.key}
               onClick={() => setActivityLevel(a.key)}
-              className={`py-4 rounded-xl border-2 text-center transition-all
+              className={`py-5 rounded-2xl border-2 text-center transition-all
                 ${activityLevel === a.key
-                  ? 'border-[#E84040] bg-[#FFFDF6] shadow-[3px_3px_0_#E84040]'
-                  : 'border-[#C8B99A] bg-[#FFFDF6] shadow-[1px_1px_0_#C8B99A]'
+                  ? 'border-[#E84040] bg-[#FFF0EE] shadow-[3px_3px_0_#E84040]'
+                  : 'border-[#C8B99A] bg-[#FFFDF6] shadow-[2px_2px_0_#C8B99A]'
                 }`}
             >
-              <p className={`serif text-sm ${activityLevel === a.key ? 'text-[#E84040]' : 'text-[#1E1810]'}`}>
-                {a.label}
-              </p>
-              <p className="text-[#B0A090] text-[10px] mt-0.5 leading-tight px-1">{a.desc}</p>
+              <p className="text-2xl mb-1">{a.emoji}</p>
+              <p className={`text-base ${activityLevel === a.key ? 'text-[#E84040]' : 'text-[#1E1810]'}`}>{a.label}</p>
+              <p className="text-[#B0A090] text-xs mt-0.5 leading-tight px-1">{a.desc}</p>
             </button>
           ))}
         </div>
 
-        {/* 기본 양념 안내 */}
-        <div className="bg-[#FFFDF6] rounded-xl px-4 py-3 border border-[#C8B99A] shadow-[1px_1px_0_#C8B99A]">
-          <p className="text-[11px] text-[#B0A090] leading-relaxed">
+        <div className="bg-[#FFFDF6] rounded-2xl px-4 py-3.5 border-2 border-[#C8B99A] shadow-[2px_2px_0_#C8B99A]">
+          <p className="text-sm text-[#B0A090] leading-relaxed">
             <span className="font-bold text-[#7A6855]">기본 양념 보유 가정</span><br/>
-            소금·간장·참기름·고추장·된장·식용유 등
+            소금·간장·참기름·고추장·된장·식용유 등은 있다고 가정해요
           </p>
         </div>
       </div>
 
-      {/* CTA */}
-      <div className="px-5 py-4 border-t-2 border-[#C8B99A]">
+      <div className="px-4 pt-3 border-t-2 border-[#C8B99A] safe-bottom">
         <div className="max-w-2xl mx-auto">
           <button
             onClick={() => {
@@ -122,13 +114,13 @@ export default function GoalSelector({ onBack, onGenerate }: Props) {
               } catch {}
               onGenerate({ goal, activityLevel, excludeIngredients: [], favoriteMeals: favMeals })
             }}
-            className="w-full py-4 rounded-xl bg-[#E84040] text-white serif text-base font-bold
+            className="w-full py-4 rounded-2xl bg-[#E84040] text-white text-lg font-bold
               border-2 border-[#E84040] shadow-[3px_3px_0_#8A1A1A]
               active:shadow-[1px_1px_0_#8A1A1A] active:translate-x-0.5 active:translate-y-0.5 transition-all"
           >
             AI 식단 생성하기
             {favCount > 0 && (
-              <span className="block text-xs font-normal opacity-80 mt-0.5">❤️ 즐겨찾기 {favCount}개 반영</span>
+              <span className="block text-sm font-bold opacity-80 mt-0.5">❤️ 즐겨찾기 {favCount}개 반영</span>
             )}
           </button>
         </div>

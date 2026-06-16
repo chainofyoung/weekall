@@ -58,33 +58,31 @@ export default function Home() {
 
   return (
     <>
-      {/* 고정 헤더 — 콘텐츠 너비에 맞게 정렬 */}
+      {/* 고정 헤더 */}
       <div className="fixed top-0 left-0 right-0 z-40 bg-[#F5F0E4]/95 backdrop-blur-sm border-b-2 border-[#C8B99A]">
-        <div className="max-w-5xl mx-auto px-5 h-14 flex items-center justify-between">
-          <img src="/weekall.png" alt="냉장고 구조대" className="h-9 w-auto" />
+        <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between">
+          <img src="/weekall.png" alt="냉장고 구조대" className="h-10 w-auto" />
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowFridge(true)}
-              className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-[#7A6855] bg-[#FFFDF6] border border-[#C8B99A] rounded-full shadow-[1px_1px_0_#C8B99A] hover:border-[#E84040] hover:text-[#E84040] transition-colors"
+              className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-bold text-[#7A6855] bg-[#FFFDF6] border-2 border-[#C8B99A] rounded-full shadow-[2px_2px_0_#C8B99A] hover:border-[#E84040] hover:text-[#E84040] transition-colors"
             >
               🧊 냉장고
             </button>
             {user ? (
               <button
                 onClick={() => setShowUserSheet(true)}
-                className="flex items-center gap-2 pl-1 pr-3 py-1 bg-[#FFFDF6] border-2 border-[#C8B99A] rounded-full shadow-[2px_2px_0_#C8B99A] hover:border-[#E84040] hover:shadow-[2px_2px_0_#E84040] transition-all group"
+                className="flex items-center gap-2 pl-1.5 pr-3.5 py-1.5 bg-[#FFFDF6] border-2 border-[#C8B99A] rounded-full shadow-[2px_2px_0_#C8B99A] hover:border-[#E84040] transition-all"
               >
-                <span className="w-6 h-6 rounded-full bg-[#E84040] text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0 border border-[#8A1A1A]">
+                <span className="w-7 h-7 rounded-full bg-[#E84040] text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
                   {(user.email?.[0] ?? '?').toUpperCase()}
                 </span>
-                <span className="text-[11px] font-bold text-[#7A6855] group-hover:text-[#E84040] transition-colors">
-                  마이페이지
-                </span>
+                <span className="text-sm font-bold text-[#7A6855]">마이페이지</span>
               </button>
             ) : (
               <button
                 onClick={() => setShowAuth(true)}
-                className="px-3 py-1.5 text-xs font-bold text-[#7A6855] bg-[#FFFDF6] border border-[#C8B99A] rounded-full shadow-[1px_1px_0_#C8B99A] hover:border-[#E84040] hover:text-[#E84040] transition-colors"
+                className="px-4 py-2 text-sm font-bold text-[#FFFDF6] bg-[#E84040] border-2 border-[#E84040] rounded-full shadow-[2px_2px_0_#8A1A1A] hover:bg-[#C83030] transition-colors"
               >
                 로그인
               </button>
@@ -93,30 +91,14 @@ export default function Home() {
         </div>
       </div>
 
-      {showAuth && (
-        <AuthModal
-          onClose={() => setShowAuth(false)}
-          onSuccess={() => setShowAuth(false)}
-        />
-      )}
-
-      {showFridge && (
-        <FridgeManager onClose={() => setShowFridge(false)} />
-      )}
-
+      {showAuth && <AuthModal onClose={() => setShowAuth(false)} onSuccess={() => setShowAuth(false)} />}
+      {showFridge && <FridgeManager onClose={() => setShowFridge(false)} />}
       {showUserSheet && user && (
         <UserSheet
           user={user}
           onClose={() => setShowUserSheet(false)}
-          onLoadPlan={(plan) => {
-            setMealPlan(plan)
-            setStep('result')
-            setShowUserSheet(false)
-          }}
-          onLogout={() => {
-            createClient().auth.signOut()
-            setShowUserSheet(false)
-          }}
+          onLoadPlan={(plan) => { setMealPlan(plan); setStep('result'); setShowUserSheet(false) }}
+          onLogout={() => { createClient().auth.signOut(); setShowUserSheet(false) }}
         />
       )}
 
@@ -129,14 +111,12 @@ export default function Home() {
           onLoginRequired={() => setShowAuth(true)}
         />
       )}
-
       {step === 'goal' && (
         <GoalSelector
           onBack={() => setStep('ingredients')}
           onGenerate={handleGenerate}
         />
       )}
-
       {step === 'result' && (
         <MealPlanView
           plan={mealPlan}

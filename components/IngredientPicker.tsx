@@ -41,7 +41,6 @@ export default function IngredientPicker({ selected, onSelect, onNext, user, onL
       .order('category')
       .then(({ data, error }) => {
         if (data && !error && data.length > 0) {
-          // 로컬 데이터(74개)를 기준으로, DB에만 있는 재료(커스텀 추가분)를 뒤에 합침
           const localIds = new Set(INGREDIENTS_DATA.map(i => i.id))
           const extra = (data as Ingredient[]).filter(i => !localIds.has(i.id))
           if (extra.length > 0) setIngredients([...INGREDIENTS_DATA, ...extra])
@@ -121,47 +120,45 @@ export default function IngredientPicker({ selected, onSelect, onNext, user, onL
   return (
     <>
       <div className="min-h-dvh flex flex-col">
-        {/* 헤더 — 고정 로고 아래 공간 확보 (pt-16) */}
-        <div className="px-5 pt-16 pb-4 max-w-5xl mx-auto w-full">
-          <span className="text-[11px] font-bold text-[#E84040] tracking-widest uppercase block mb-3">STEP 1 / 3</span>
-          <div className="flex items-end justify-between">
+        {/* 헤더 */}
+        <div className="px-4 pt-20 pb-4 max-w-2xl mx-auto w-full">
+          <span className="text-xs font-bold text-[#E84040] tracking-widest uppercase block mb-2">STEP 1 / 3</span>
+          <div className="flex items-end justify-between mb-4">
             <div>
-              <h1 className="serif text-2xl text-[#1E1810] mb-0.5">냉장고 재료 선택</h1>
-              <p className="text-[#7A6855] text-sm">지금 있는 재료를 모두 골라주세요</p>
+              <h1 className="text-2xl text-[#1E1810] mb-0.5">냉장고 재료 선택</h1>
+              <p className="text-sm text-[#7A6855]">지금 있는 재료를 골라주세요</p>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={loadFromFridge}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#FFFDF6] border border-[#C8B99A] rounded-full text-xs font-bold text-[#7A6855] hover:border-[#E84040] hover:text-[#E84040] transition-colors shadow-[1px_1px_0_#C8B99A]"
+                className="flex items-center gap-1 px-3 py-2 bg-[#FFFDF6] border-2 border-[#C8B99A] rounded-full text-sm font-bold text-[#7A6855] hover:border-[#E84040] hover:text-[#E84040] transition-colors shadow-[2px_2px_0_#C8B99A]"
               >
-                <span>🧊</span>
-                <span>냉장고</span>
+                🧊 불러오기
               </button>
               <button
                 onClick={() => setShowBoard(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#FFFDF6] border border-[#C8B99A] rounded-full text-xs text-[#7A6855] hover:border-[#E84040] hover:text-[#E84040] transition-colors shadow-[1px_1px_0_#C8B99A]"
+                className="flex items-center gap-1 px-3 py-2 bg-[#FFFDF6] border-2 border-[#C8B99A] rounded-full text-sm text-[#7A6855] hover:border-[#E84040] hover:text-[#E84040] transition-colors shadow-[2px_2px_0_#C8B99A]"
               >
-                <span>💬</span>
-                <span>재료 건의</span>
+                💬 건의
               </button>
             </div>
           </div>
 
-          {/* 검색 + 직접입력 */}
-          <div className="relative mt-4">
-            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#B0A090] text-sm">✏️</span>
+          {/* 검색 */}
+          <div className="relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#B0A090]">✏️</span>
             <input
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               onKeyDown={handleSearchKeyDown}
               placeholder="재료 검색 또는 직접 입력 후 Enter"
-              className="w-full pl-9 pr-16 py-2.5 bg-[#FFFDF6] border border-[#C8B99A] rounded-xl text-sm text-[#1E1810] placeholder:text-[#B0A090] outline-none focus:border-[#E84040] transition-colors shadow-[1px_1px_0_#C8B99A]"
+              className="w-full pl-10 pr-16 py-3 bg-[#FFFDF6] border-2 border-[#C8B99A] rounded-2xl text-base text-[#1E1810] placeholder:text-[#B0A090] outline-none focus:border-[#E84040] transition-colors shadow-[2px_2px_0_#C8B99A]"
             />
             {searchQuery.trim() && !hasExactMatch && (
               <button
                 onClick={() => addCustom(searchQuery)}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 px-3 py-1 bg-[#E84040] text-white text-[11px] font-bold rounded-lg shadow-[1px_1px_0_#8A1A1A]"
+                className="absolute right-3 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-[#E84040] text-white text-sm font-bold rounded-xl shadow-[1px_1px_0_#8A1A1A]"
               >
                 추가
               </button>
@@ -170,16 +167,16 @@ export default function IngredientPicker({ selected, onSelect, onNext, user, onL
         </div>
 
         {/* 카테고리 탭 */}
-        <div className="px-5 mb-3 max-w-5xl mx-auto w-full">
+        <div className="px-4 mb-3 max-w-2xl mx-auto w-full">
           <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
             {CATEGORIES.map(cat => (
               <button
                 key={cat.key}
                 onClick={() => setActiveCategory(cat.key)}
-                className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-bold transition-all border
+                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-bold transition-all border-2
                   ${activeCategory === cat.key
                     ? 'bg-[#1E1810] text-[#FFFDF6] border-[#1E1810] shadow-[2px_2px_0_#8A7860]'
-                    : 'bg-[#FFFDF6] text-[#7A6855] border-[#C8B99A] shadow-[1px_1px_0_#C8B99A]'
+                    : 'bg-[#FFFDF6] text-[#7A6855] border-[#C8B99A] shadow-[2px_2px_0_#C8B99A]'
                   }`}
               >
                 {cat.label}
@@ -189,40 +186,40 @@ export default function IngredientPicker({ selected, onSelect, onNext, user, onL
         </div>
 
         {/* 재료 그리드 */}
-        <div className="flex-1 overflow-y-auto px-5 pb-48 max-w-5xl mx-auto w-full">
+        <div className="flex-1 overflow-y-auto px-4 pb-52 max-w-2xl mx-auto w-full">
           {searchQuery.trim() && filtered.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-[#B0A090] text-sm mb-4">'{searchQuery}' 검색 결과 없음</p>
+            <div className="text-center py-16">
+              <p className="text-[#B0A090] text-base mb-4">'{searchQuery}' 검색 결과 없음</p>
               <button
                 onClick={() => addCustom(searchQuery)}
-                className="px-5 py-2.5 bg-[#E84040] text-white text-sm font-bold rounded-xl shadow-[2px_2px_0_#8A1A1A]"
+                className="px-6 py-3 bg-[#E84040] text-white text-base font-bold rounded-2xl shadow-[2px_2px_0_#8A1A1A]"
               >
-                + '{searchQuery}' 직접 추가하기
+                + '{searchQuery}' 직접 추가
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2.5">
               {filtered.map(ingredient => {
                 const sel = selected.find(s => s.ingredient.id === ingredient.id)
                 const isSelected = !!sel
                 return (
-                  <div key={ingredient.id} className="flex flex-col gap-1">
+                  <div key={ingredient.id} className="flex flex-col gap-1.5">
                     <button
                       onClick={() => toggle(ingredient)}
-                      className={`relative w-full aspect-square rounded-xl flex flex-col items-center justify-center gap-1.5 transition-all
+                      className={`relative w-full aspect-square rounded-2xl flex flex-col items-center justify-center gap-1.5 transition-all
                         ${isSelected
                           ? 'bg-[#FFF0EE] border-2 border-[#E84040] shadow-[2px_2px_0_#E84040]'
-                          : 'bg-[#FFFDF6] border-2 border-[#C8B99A] shadow-[1px_1px_0_#C8B99A] hover:border-[#8A7860]'
+                          : 'bg-[#FFFDF6] border-2 border-[#C8B99A] shadow-[2px_2px_0_#C8B99A] hover:border-[#8A7860]'
                         }`}
                     >
-                      <span className="text-2xl leading-none">{ingredient.emoji}</span>
-                      <span className={`text-[10px] font-bold leading-none text-center px-1
+                      <span className="text-3xl leading-none">{ingredient.emoji}</span>
+                      <span className={`text-xs font-bold leading-none text-center px-1
                         ${isSelected ? 'text-[#E84040]' : 'text-[#1E1810]'}`}>
                         {ingredient.name}
                       </span>
                       {isSelected && (
-                        <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-[#E84040] flex items-center justify-center">
-                          <svg width="7" height="5" viewBox="0 0 9 7" fill="none">
+                        <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-[#E84040] flex items-center justify-center">
+                          <svg width="8" height="6" viewBox="0 0 9 7" fill="none">
                             <path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         </span>
@@ -231,13 +228,13 @@ export default function IngredientPicker({ selected, onSelect, onNext, user, onL
                     {isSelected && (
                       <button
                         onClick={() => toggleExpiry(ingredient.id)}
-                        className={`w-full py-0.5 rounded-lg text-[9px] font-bold transition-all border
+                        className={`w-full py-1 rounded-lg text-xs font-bold transition-all border-2
                           ${sel?.isExpiringSoon
                             ? 'bg-[#E84040] text-white border-[#E84040]'
                             : 'bg-[#FFFDF6] text-[#B0A090] border-[#C8B99A]'
                           }`}
                       >
-                        {sel?.isExpiringSoon ? '⚠ 곧 상해요' : '유통기한?'}
+                        {sel?.isExpiringSoon ? '⚠ 곧 상함' : '유통기한?'}
                       </button>
                     )}
                   </div>
@@ -248,43 +245,46 @@ export default function IngredientPicker({ selected, onSelect, onNext, user, onL
         </div>
 
         {/* 하단 바 */}
-        <div className="fixed bottom-0 left-0 right-0 bg-[#F5F0E4] border-t-2 border-[#C8B99A] px-5 py-4">
-          <div className="max-w-5xl mx-auto mb-2">
+        <div className="fixed bottom-0 left-0 right-0 bg-[#F5F0E4]/95 backdrop-blur-sm border-t-2 border-[#C8B99A] px-4 pt-3 safe-bottom">
+          <div className="max-w-2xl mx-auto">
+            {/* 광고 */}
             <AdFitBanner
               unitId={process.env.NEXT_PUBLIC_KAKAO_ADFIT_UNIT_ID_1}
               width={320}
               height={50}
+              className="mb-3"
             />
-          </div>
-          {selected.length > 0 && (
-            <div className="flex gap-1.5 overflow-x-auto pb-3 max-w-5xl mx-auto" style={{ scrollbarWidth: 'none' }}>
-              {selected.map(s => (
-                <span
-                  key={s.ingredient.id}
-                  onClick={() => toggle(s.ingredient)}
-                  className={`flex-shrink-0 cursor-pointer flex items-center gap-1 pl-2 pr-1.5 py-1 rounded-full text-[11px] font-bold border
-                    ${s.isExpiringSoon
-                      ? 'bg-[#E84040] border-[#E84040] text-white'
-                      : 'bg-[#FFFDF6] border-[#C8B99A] text-[#1E1810]'
-                    }`}
-                >
-                  {s.ingredient.emoji} {s.ingredient.name}
-                  <span className="opacity-40 text-[10px] ml-0.5">×</span>
-                </span>
-              ))}
-            </div>
-          )}
-          <div className="max-w-5xl mx-auto">
+
+            {/* 선택된 재료 태그 */}
+            {selected.length > 0 && (
+              <div className="flex gap-2 overflow-x-auto pb-3" style={{ scrollbarWidth: 'none' }}>
+                {selected.map(s => (
+                  <span
+                    key={s.ingredient.id}
+                    onClick={() => toggle(s.ingredient)}
+                    className={`flex-shrink-0 cursor-pointer flex items-center gap-1 pl-2.5 pr-2 py-1.5 rounded-full text-sm font-bold border-2
+                      ${s.isExpiringSoon
+                        ? 'bg-[#E84040] border-[#E84040] text-white'
+                        : 'bg-[#FFFDF6] border-[#C8B99A] text-[#1E1810]'
+                      }`}
+                  >
+                    {s.ingredient.emoji} {s.ingredient.name}
+                    <span className="opacity-50 text-xs ml-0.5">×</span>
+                  </span>
+                ))}
+              </div>
+            )}
+
             <button
               onClick={onNext}
               disabled={selected.length === 0}
-              className={`w-full py-3.5 rounded-xl font-bold serif text-base transition-all
+              className={`w-full py-4 rounded-2xl font-bold text-lg transition-all
                 ${selected.length > 0
                   ? 'bg-[#1E1810] text-[#FFFDF6] border-2 border-[#1E1810] shadow-[3px_3px_0_#8A7860] active:shadow-[1px_1px_0_#8A7860] active:translate-x-0.5 active:translate-y-0.5'
                   : 'bg-[#E8E0D4] text-[#B0A090] border-2 border-[#C8B99A] cursor-not-allowed'
                 }`}
             >
-              {selected.length > 0 ? `${selected.length}가지 재료로 다음 단계 →` : '재료를 선택해주세요'}
+              {selected.length > 0 ? `${selected.length}가지 재료로 다음 →` : '재료를 선택해주세요'}
             </button>
           </div>
         </div>
