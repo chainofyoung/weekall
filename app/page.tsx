@@ -9,10 +9,11 @@ import AuthModal from '@/components/AuthModal'
 import UserSheet from '@/components/UserSheet'
 import FridgeManager from '@/components/FridgeManager'
 import ExpiryBanner from '@/components/ExpiryBanner'
+import Dashboard from '@/components/Dashboard'
 import { UserIngredient, UserPreference, WeeklyMealPlan } from '@/types'
 import type { User } from '@supabase/supabase-js'
 
-type Step = 'ingredients' | 'goal' | 'result'
+type Step = 'dashboard' | 'ingredients' | 'goal' | 'result'
 
 export default function Home() {
   const [step, setStep] = useState<Step>('ingredients')
@@ -21,6 +22,7 @@ export default function Home() {
   const [mealPlan, setMealPlan] = useState<WeeklyMealPlan | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [user, setUser] = useState<User | null>(null)
+  const [authLoading, setAuthLoading] = useState(true)
   const [showAuth, setShowAuth] = useState(false)
   const [showUserSheet, setShowUserSheet] = useState(false)
   const [showFridge, setShowFridge] = useState(false)
@@ -28,10 +30,16 @@ export default function Home() {
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
+      const u = session?.user ?? null
+      setUser(u)
+      if (u) setStep('dashboard')
+      setAuthLoading(false)
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
+      const u = session?.user ?? null
+      setUser(u)
+      if (u && _event === 'SIGNED_IN') setStep('dashboard')
+      if (_event === 'SIGNED_OUT') setStep('ingredients')
     })
     return () => subscription.unsubscribe()
   }, [])
@@ -108,7 +116,22 @@ export default function Home() {
         />
       )}
 
-      {step === 'ingredients' && (
+      {authLoading && (
+        <div className="min-h-dvh flex items-center justify-center">
+          <p className="text-3xl animate-pulse">🧊</p>
+        </div>
+      )}
+
+      {!authLoading && step === 'dashboard' && user && (
+        <Dashboard
+          user={user}
+          onStart={() => setStep('ingredients')}
+          onLoadPlan={(plan) => { setMealPlan(plan); setStep('result') }}
+          onOpenFridge={() => setShowFridge(true)}
+        />
+      )}
+
+      {!authLoading && step === 'ingredients' && (
         <IngredientPicker
           selected={selectedIngredients}
           onSelect={setSelectedIngredients}
@@ -117,7 +140,7 @@ export default function Home() {
           onLoginRequired={() => setShowAuth(true)}
         />
       )}
-      {step === 'goal' && (
+      {!authLoading && step === 'goal' && (
         <GoalSelector
           onBack={() => setStep('ingredients')}
           onGenerate={handleGenerate}
@@ -125,11 +148,11 @@ export default function Home() {
           onLoginRequired={() => setShowAuth(true)}
         />
       )}
-      {step === 'result' && (
+      {!authLoading && step === 'result' && (
         <MealPlanView
           plan={mealPlan}
           isLoading={isGenerating}
-          onBack={() => { setStep('ingredients'); setMealPlan(null) }}
+          onBack={() => { setStep(user ? 'dashboard' : 'ingredients'); setMealPlan(null) }}
           user={user}
           onLoginRequired={() => setShowAuth(true)}
           ingredients={selectedIngredients}
