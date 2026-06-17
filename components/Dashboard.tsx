@@ -23,12 +23,49 @@ interface Props {
   onStart: () => void
   onLoadPlan: (plan: WeeklyMealPlan) => void
   onOpenFridge: () => void
+  onOpenHistory: () => void
 }
 
-export default function Dashboard({ user, onStart, onLoadPlan, onOpenFridge }: Props) {
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+  const rawData = window.atob(base64)
+  const outputArray = new Uint8Array(rawData.length)
+  for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i)
+  return outputArray
+}
+
+export default function Dashboard({ user, onStart, onLoadPlan, onOpenFridge, onOpenHistory }: Props) {
   const [lastPlan, setLastPlan] = useState<{ plan: WeeklyMealPlan; createdAt: string } | null>(null)
   const [expiryItems, setExpiryItems] = useState<ExpiryInfo[]>([])
   const [loading, setLoading] = useState(true)
+  const [notifStatus, setNotifStatus] = useState<'default' | 'granted' | 'denied' | 'unsupported'>('default')
+
+  useEffect(() => {
+    if ('Notification' in window) {
+      setNotifStatus(Notification.permission as 'default' | 'granted' | 'denied')
+    } else {
+      setNotifStatus('unsupported')
+    }
+  }, [])
+
+  async function enableNotifications() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return
+    const permission = await Notification.requestPermission()
+    setNotifStatus(permission as 'granted' | 'denied' | 'default')
+    if (permission !== 'granted') return
+    const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' })
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!),
+    })
+    await fetch('/api/push/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subscription: sub }),
+      credentials: 'include',
+    })
+  }
 
   useEffect(() => {
     const supabase = createClient()
@@ -189,6 +226,29 @@ export default function Dashboard({ user, onStart, onLoadPlan, onOpenFridge }: P
             <p className="text-xs text-[#B0A090] mt-1">아래 버튼을 눌러 첫 식단을 만들어보세요</p>
           </div>
         )}
+
+        {/* 보조 버튼 행 */}
+        <div className="flex gap-3 mb-4">
+          <button
+            onClick={onOpenHistory}
+            className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold text-[#1E1810] bg-[#FFFDF6] border-2 border-[#C8B99A] shadow-[2px_2px_0_#C8B99A] hover:border-[#E84040] hover:text-[#E84040] transition-all"
+          >
+            📅 식단 히스토리
+          </button>
+          {notifStatus === 'default' && (
+            <button
+              onClick={enableNotifications}
+              className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold text-[#1E1810] bg-[#FFFDF6] border-2 border-[#C8B99A] shadow-[2px_2px_0_#C8B99A] hover:border-[#E84040] hover:text-[#E84040] transition-all"
+            >
+              🔔 알림 켜기
+            </button>
+          )}
+          {notifStatus === 'granted' && (
+            <div className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold text-emerald-700 bg-emerald-50 border-2 border-emerald-300">
+              🔔 알림 설정됨
+            </div>
+          )}
+        </div>
 
         {/* 메인 CTA */}
         <button

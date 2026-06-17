@@ -10,10 +10,11 @@ import UserSheet from '@/components/UserSheet'
 import FridgeManager from '@/components/FridgeManager'
 import ExpiryBanner from '@/components/ExpiryBanner'
 import Dashboard from '@/components/Dashboard'
+import HistoryCalendar from '@/components/HistoryCalendar'
 import { UserIngredient, UserPreference, WeeklyMealPlan } from '@/types'
 import type { User } from '@supabase/supabase-js'
 
-type Step = 'dashboard' | 'ingredients' | 'goal' | 'result'
+type Step = 'dashboard' | 'history' | 'ingredients' | 'goal' | 'result'
 
 export default function Home() {
   const [step, setStep] = useState<Step>('ingredients')
@@ -128,6 +129,15 @@ export default function Home() {
           onStart={() => setStep('ingredients')}
           onLoadPlan={(plan) => { setMealPlan(plan); setStep('result') }}
           onOpenFridge={() => setShowFridge(true)}
+          onOpenHistory={() => setStep('history')}
+        />
+      )}
+
+      {!authLoading && step === 'history' && user && (
+        <HistoryCalendar
+          user={user}
+          onClose={() => setStep('dashboard')}
+          onLoadPlan={(plan) => { setMealPlan(plan); setStep('result') }}
         />
       )}
 
