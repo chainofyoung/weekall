@@ -116,16 +116,12 @@ export default function Dashboard({ user, onStart, onLoadPlan, onOpenFridge, onO
   })()
 
   const userName = user.email?.split('@')[0] ?? '님'
-
   const urgentCount = expiryItems.filter(i => i.status === 'expired' || i.status === 'warning').length
 
   if (loading) {
     return (
       <div className="min-h-dvh flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-3xl animate-pulse mb-3">🧊</p>
-          <p className="text-sm text-[#B0A090]">불러오는 중...</p>
-        </div>
+        <p className="text-sm text-[#B0A090]">불러오는 중...</p>
       </div>
     )
   }
@@ -136,29 +132,26 @@ export default function Dashboard({ user, onStart, onLoadPlan, onOpenFridge, onO
 
         {/* 인사말 */}
         <div className="mb-6">
-          <p className="text-sm text-[#B0A090] mb-0.5">{greeting} 👋</p>
+          <p className="text-sm text-[#B0A090] mb-0.5">{greeting}</p>
           <h1 className="text-2xl font-bold text-[#1E1810]">{userName}<span className="font-normal">의 냉장고</span></h1>
         </div>
 
         {/* 냉장고 상태 카드 */}
         <button
           onClick={onOpenFridge}
-          className="w-full mb-4 text-left bg-[#FFFDF6] border-2 border-[#C8B99A] rounded-2xl p-5 shadow-[3px_3px_0_#C8B99A] hover:border-[#E84040] hover:shadow-[3px_3px_0_#E84040] transition-all group"
+          className="w-full mb-4 text-left bg-[#FFFDF6] border-2 border-[#C8B99A] rounded-2xl p-5 shadow-[3px_3px_0_#C8B99A] hover:border-[#E84040] hover:shadow-[3px_3px_0_#E84040] transition-all"
         >
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <span className="text-xl">🧊</span>
-              <span className="text-sm font-bold text-[#1E1810]">내 냉장고</span>
-            </div>
+            <span className="text-sm font-bold text-[#1E1810]">내 냉장고</span>
             {urgentCount > 0 ? (
               <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#FFF0EE] text-[#E84040] border border-[#E84040]">
-                ⚠️ {urgentCount}개 주의
+                {urgentCount}개 주의
               </span>
             ) : expiryItems.length === 0 ? (
               <span className="text-xs text-[#B0A090]">비어있음</span>
             ) : (
               <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-300">
-                ✅ 양호
+                양호
               </span>
             )}
           </div>
@@ -176,7 +169,7 @@ export default function Dashboard({ user, onStart, onLoadPlan, onOpenFridge, onO
                       'bg-[#F5F0E4] text-[#7A6855] border-[#C8B99A]'}`}
                 >
                   {item.emoji} {item.name}
-                  <span className="opacity-70">
+                  <span className="opacity-70 ml-0.5">
                     {daysLeft <= 0 ? '기한초과' : `${daysLeft}일`}
                   </span>
                 </span>
@@ -189,16 +182,12 @@ export default function Dashboard({ user, onStart, onLoadPlan, onOpenFridge, onO
         {lastPlan ? (
           <div className="mb-4 bg-[#FFFDF6] border-2 border-[#C8B99A] rounded-2xl p-5 shadow-[3px_3px_0_#C8B99A]">
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">🍱</span>
-                <span className="text-sm font-bold text-[#1E1810]">지난 식단</span>
-              </div>
+              <span className="text-sm font-bold text-[#1E1810]">지난 식단</span>
               <span className="text-xs text-[#B0A090]">
                 {new Date(lastPlan.createdAt).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })}
               </span>
             </div>
 
-            {/* 식단 미리보기: 처음 3일의 점심만 */}
             <div className="flex flex-col gap-1.5 mb-4">
               {lastPlan.plan.days.slice(0, 3).map((day, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm">
@@ -221,7 +210,6 @@ export default function Dashboard({ user, onStart, onLoadPlan, onOpenFridge, onO
           </div>
         ) : (
           <div className="mb-4 bg-[#FFFDF6] border-2 border-dashed border-[#C8B99A] rounded-2xl p-5 text-center">
-            <p className="text-3xl mb-2">🍱</p>
             <p className="text-sm font-bold text-[#7A6855]">아직 생성된 식단이 없어요</p>
             <p className="text-xs text-[#B0A090] mt-1">아래 버튼을 눌러 첫 식단을 만들어보세요</p>
           </div>
@@ -231,21 +219,21 @@ export default function Dashboard({ user, onStart, onLoadPlan, onOpenFridge, onO
         <div className="flex gap-3 mb-4">
           <button
             onClick={onOpenHistory}
-            className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold text-[#1E1810] bg-[#FFFDF6] border-2 border-[#C8B99A] shadow-[2px_2px_0_#C8B99A] hover:border-[#E84040] hover:text-[#E84040] transition-all"
+            className="flex-1 py-3.5 rounded-xl text-sm font-bold text-[#1E1810] bg-[#FFFDF6] border-2 border-[#C8B99A] shadow-[2px_2px_0_#C8B99A] hover:border-[#E84040] hover:text-[#E84040] transition-all"
           >
-            📅 식단 히스토리
+            식단 히스토리
           </button>
           {notifStatus === 'default' && (
             <button
               onClick={enableNotifications}
-              className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold text-[#1E1810] bg-[#FFFDF6] border-2 border-[#C8B99A] shadow-[2px_2px_0_#C8B99A] hover:border-[#E84040] hover:text-[#E84040] transition-all"
+              className="flex-1 py-3.5 rounded-xl text-sm font-bold text-[#1E1810] bg-[#FFFDF6] border-2 border-[#C8B99A] shadow-[2px_2px_0_#C8B99A] hover:border-[#E84040] hover:text-[#E84040] transition-all"
             >
-              🔔 알림 켜기
+              알림 켜기
             </button>
           )}
           {notifStatus === 'granted' && (
-            <div className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold text-emerald-700 bg-emerald-50 border-2 border-emerald-300">
-              🔔 알림 설정됨
+            <div className="flex-1 flex items-center justify-center py-3.5 rounded-xl text-sm font-bold text-emerald-700 bg-emerald-50 border-2 border-emerald-300">
+              알림 설정됨
             </div>
           )}
         </div>
@@ -255,7 +243,7 @@ export default function Dashboard({ user, onStart, onLoadPlan, onOpenFridge, onO
           onClick={onStart}
           className="w-full py-5 rounded-2xl font-bold text-lg bg-[#E84040] text-white border-2 border-[#E84040] shadow-[4px_4px_0_#8A1A1A] active:shadow-[1px_1px_0_#8A1A1A] active:translate-x-0.5 active:translate-y-0.5 transition-all"
         >
-          🥬 새 식단 만들기
+          새 식단 만들기
         </button>
         <p className="text-center text-xs text-[#B0A090] mt-3">냉장고 재료를 고르면 AI가 일주일 식단을 짜드려요</p>
 

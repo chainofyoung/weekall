@@ -3,12 +3,18 @@
 import { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
-import type { WeeklyMealPlan } from '@/types'
+import type { WeeklyMealPlan, DayMealPlan } from '@/types'
 
 interface PlanRecord {
   id: string
   plan: WeeklyMealPlan
   createdAt: Date
+}
+
+interface DayEntry {
+  record: PlanRecord
+  dayData: DayMealPlan
+  date: Date
 }
 
 interface Props {
@@ -20,11 +26,17 @@ interface Props {
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 const MONTHS = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
 
+const MEAL_SLOTS = [
+  { key: 'breakfast' as const, label: '아침' },
+  { key: 'lunch'     as const, label: '점심' },
+  { key: 'dinner'    as const, label: '저녁' },
+]
+
 export default function HistoryCalendar({ user, onClose, onLoadPlan }: Props) {
   const [plans, setPlans] = useState<PlanRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [viewDate, setViewDate] = useState(() => new Date())
-  const [selectedPlan, setSelectedPlan] = useState<PlanRecord | null>(null)
+  const [selected, setSelected] = useState<DayEntry | null>(null)
 
   useEffect(() => {
     const supabase = createClient()
@@ -44,64 +56,56 @@ export default function HistoryCalendar({ user, onClose, onLoadPlan }: Props) {
       })
   }, [user])
 
-  // 현재 달에 해당하는 날짜 그리드 생성
+  // 각 plan의 7일을 실제 날짜에 매핑
+  const dayByDate = useMemo(() => {
+    const map = new Map<string, DayEntry>()
+    for (const record of plans) {
+      const start = new Date(record.createdAt)
+      start.setHours(0, 0, 0, 0)
+      record.plan.days.forEach((dayData, i) => {
+        const date = new Date(start)
+        date.setDate(start.getDate() + i)
+        const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+        if (!map.has(key)) map.set(key, { record, dayData, date })
+      })
+    }
+    return map
+  }, [plans])
+
   const calendarDays = useMemo(() => {
     const year = viewDate.getFullYear()
     const month = viewDate.getMonth()
-    const firstDay = new Date(year, month, 1).getDay()  // 0=일
+    const firstDay = new Date(year, month, 1).getDay()
     const lastDate = new Date(year, month + 1, 0).getDate()
-
     const days: (Date | null)[] = Array(firstDay).fill(null)
     for (let d = 1; d <= lastDate; d++) days.push(new Date(year, month, d))
     while (days.length % 7 !== 0) days.push(null)
     return days
   }, [viewDate])
 
-  // 날짜별 plan 매핑
-  const planByDate = useMemo(() => {
-    const map = new Map<string, PlanRecord>()
-    for (const p of plans) {
-      const key = `${p.createdAt.getFullYear()}-${p.createdAt.getMonth()}-${p.createdAt.getDate()}`
-      if (!map.has(key)) map.set(key, p)
-    }
-    return map
-  }, [plans])
-
-  function getPlanForDay(day: Date): PlanRecord | undefined {
-    const key = `${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`
-    return planByDate.get(key)
+  function getEntry(day: Date): DayEntry | undefined {
+    return dayByDate.get(`${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`)
   }
 
   const today = new Date()
-  const isToday = (day: Date) =>
-    day.getFullYear() === today.getFullYear() &&
-    day.getMonth() === today.getMonth() &&
-    day.getDate() === today.getDate()
-
-  function prevMonth() {
-    setViewDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))
-    setSelectedPlan(null)
-  }
-  function nextMonth() {
-    setViewDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))
-    setSelectedPlan(null)
+  function isToday(day: Date) {
+    return day.getFullYear() === today.getFullYear() &&
+      day.getMonth() === today.getMonth() &&
+      day.getDate() === today.getDate()
   }
 
-  const MEAL_SLOTS = [
-    { key: 'breakfast' as const, label: '아침', emoji: '🌅' },
-    { key: 'lunch'     as const, label: '점심', emoji: '☀️' },
-    { key: 'dinner'    as const, label: '저녁', emoji: '🌙' },
-  ]
+  function prevMonth() { setViewDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1)); setSelected(null) }
+  function nextMonth() { setViewDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1)); setSelected(null) }
+  const isCurrentMonth = viewDate.getFullYear() === today.getFullYear() && viewDate.getMonth() === today.getMonth()
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-[#F5F0E4]">
-      {/* 헤더 */}
       <div className="flex-shrink-0 border-b-2 border-[#C8B99A] bg-[#F5F0E4]">
         <div className="max-w-2xl mx-auto px-5 h-14 flex items-center justify-between">
-          <button onClick={onClose} className="text-[#B0A090] text-sm flex items-center gap-1 hover:text-[#7A6855] transition-colors">
+          <button onClick={onClose} className="text-[#B0A090] text-sm hover:text-[#7A6855] transition-colors">
             ← 돌아가기
           </button>
-          <span className="text-base font-bold text-[#1E1810]">📅 식단 히스토리</span>
+          <span className="text-base font-bold text-[#1E1810]">식단 히스토리</span>
           <div className="w-16" />
         </div>
       </div>
@@ -113,18 +117,18 @@ export default function HistoryCalendar({ user, onClose, onLoadPlan }: Props) {
           <div className="flex items-center justify-between mb-5">
             <button
               onClick={prevMonth}
-              className="w-9 h-9 rounded-full bg-[#FFFDF6] border-2 border-[#C8B99A] shadow-[2px_2px_0_#C8B99A] flex items-center justify-center text-[#7A6855] hover:border-[#E84040] hover:text-[#E84040] transition-all active:shadow-none active:translate-x-0.5 active:translate-y-0.5"
+              className="w-9 h-9 rounded-full bg-[#FFFDF6] border-2 border-[#C8B99A] shadow-[2px_2px_0_#C8B99A] flex items-center justify-center text-[#7A6855] hover:border-[#E84040] hover:text-[#E84040] transition-all"
             >
               ‹
             </button>
             <div className="text-center">
-              <p className="text-xs text-[#B0A090] mb-0.5">{viewDate.getFullYear()}</p>
+              <p className="text-xs text-[#B0A090]">{viewDate.getFullYear()}</p>
               <p className="text-xl font-bold text-[#1E1810]">{MONTHS[viewDate.getMonth()]}</p>
             </div>
             <button
               onClick={nextMonth}
-              disabled={viewDate.getFullYear() === today.getFullYear() && viewDate.getMonth() === today.getMonth()}
-              className="w-9 h-9 rounded-full bg-[#FFFDF6] border-2 border-[#C8B99A] shadow-[2px_2px_0_#C8B99A] flex items-center justify-center text-[#7A6855] hover:border-[#E84040] hover:text-[#E84040] transition-all active:shadow-none active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-30 disabled:cursor-not-allowed"
+              disabled={isCurrentMonth}
+              className="w-9 h-9 rounded-full bg-[#FFFDF6] border-2 border-[#C8B99A] shadow-[2px_2px_0_#C8B99A] flex items-center justify-center text-[#7A6855] hover:border-[#E84040] hover:text-[#E84040] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
             >
               ›
             </button>
@@ -132,7 +136,6 @@ export default function HistoryCalendar({ user, onClose, onLoadPlan }: Props) {
 
           {loading ? (
             <div className="text-center py-16">
-              <p className="text-3xl animate-pulse mb-3">📅</p>
               <p className="text-sm text-[#B0A090]">불러오는 중...</p>
             </div>
           ) : (
@@ -142,11 +145,8 @@ export default function HistoryCalendar({ user, onClose, onLoadPlan }: Props) {
                 {/* 요일 헤더 */}
                 <div className="grid grid-cols-7 border-b-2 border-[#E8DFD0]">
                   {WEEKDAYS.map((d, i) => (
-                    <div
-                      key={d}
-                      className={`py-2.5 text-center text-xs font-bold
-                        ${i === 0 ? 'text-[#E84040]' : i === 6 ? 'text-blue-500' : 'text-[#B0A090]'}`}
-                    >
+                    <div key={d} className={`py-2.5 text-center text-xs font-bold
+                      ${i === 0 ? 'text-[#E84040]' : i === 6 ? 'text-blue-500' : 'text-[#B0A090]'}`}>
                       {d}
                     </div>
                   ))}
@@ -155,106 +155,90 @@ export default function HistoryCalendar({ user, onClose, onLoadPlan }: Props) {
                 {/* 날짜 셀 */}
                 <div className="grid grid-cols-7">
                   {calendarDays.map((day, idx) => {
-                    const plan = day ? getPlanForDay(day) : undefined
+                    const entry = day ? getEntry(day) : undefined
                     const todayDay = day && isToday(day)
-                    const isSelected = day && selectedPlan && plan?.id === selectedPlan.id
+                    const isSelected = day && selected && entry?.record.id === selected.record.id &&
+                      entry.date.toDateString() === selected.date.toDateString()
                     const col = idx % 7
 
                     return (
                       <button
                         key={idx}
-                        onClick={() => {
-                          if (plan) setSelectedPlan(isSelected ? null : plan)
-                        }}
-                        disabled={!plan}
-                        className={`relative aspect-square flex flex-col items-center justify-center gap-0.5 transition-all border-b border-r border-[#F0E8D8]
-                          ${plan
-                            ? isSelected
-                              ? 'bg-[#FFF0EE] border-b-[#E84040]'
-                              : 'hover:bg-[#FFF8F7] cursor-pointer'
-                            : 'cursor-default'
-                          }`}
+                        onClick={() => entry && setSelected(isSelected ? null : entry)}
+                        disabled={!entry}
+                        className={`relative aspect-square flex flex-col items-center justify-center gap-0.5 transition-all border-b border-r border-[#F0E8D8] last:border-r-0
+                          ${entry ? (isSelected ? 'bg-[#FFF0EE]' : 'hover:bg-[#FFF8F7] cursor-pointer') : 'cursor-default'}`}
                       >
-                        {day ? (
+                        {day && (
                           <>
                             <span className={`text-sm font-bold leading-none
                               ${todayDay
                                 ? 'w-6 h-6 rounded-full bg-[#E84040] text-white flex items-center justify-center text-xs'
+                                : isSelected ? 'text-[#E84040]'
                                 : col === 0 ? 'text-[#E84040]'
                                 : col === 6 ? 'text-blue-500'
-                                : isSelected ? 'text-[#E84040]' : 'text-[#1E1810]'
-                              }`}
-                            >
+                                : 'text-[#1E1810]'
+                              }`}>
                               {day.getDate()}
                             </span>
-                            {plan && (
-                              <span className={`text-[8px] font-bold px-1 py-0.5 rounded-full
-                                ${isSelected
-                                  ? 'bg-[#E84040] text-white'
-                                  : 'bg-[#FFF0EE] text-[#E84040]'
-                                }`}
-                              >
-                                🍱
-                              </span>
+                            {entry && (
+                              <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-[#E84040]' : 'bg-[#C8B99A]'}`} />
                             )}
                           </>
-                        ) : null}
+                        )}
                       </button>
                     )
                   })}
                 </div>
               </div>
 
-              {/* 선택된 식단 상세 */}
-              {selectedPlan ? (
+              {/* 선택된 날 식단 */}
+              {selected ? (
                 <div className="bg-[#FFFDF6] rounded-2xl border-2 border-[#E84040] shadow-[3px_3px_0_#E84040] overflow-hidden">
                   <div className="px-5 py-4 border-b-2 border-[#E8DFD0] flex items-center justify-between">
                     <div>
-                      <p className="text-xs text-[#B0A090]">
-                        {selectedPlan.createdAt.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })} 생성
+                      <p className="text-base font-bold text-[#1E1810]">
+                        {selected.date.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })}
                       </p>
-                      <p className="text-base font-bold text-[#1E1810] mt-0.5">일주일 식단 ({selectedPlan.plan.days.length}일)</p>
+                      <p className="text-xs text-[#B0A090] mt-0.5">
+                        {selected.record.createdAt.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })} 생성된 식단
+                      </p>
                     </div>
                     <button
-                      onClick={() => { onLoadPlan(selectedPlan.plan); onClose() }}
+                      onClick={() => { onLoadPlan(selected.record.plan); onClose() }}
                       className="px-4 py-2 bg-[#E84040] text-white text-sm font-bold rounded-xl border-2 border-[#E84040] shadow-[2px_2px_0_#8A1A1A] active:shadow-none active:translate-x-0.5 active:translate-y-0.5 transition-all"
                     >
-                      이어 보기 →
+                      전체 보기 →
                     </button>
                   </div>
                   <div className="px-5 py-4 flex flex-col gap-3">
-                    {selectedPlan.plan.days.map((day, i) => (
-                      <div key={i}>
-                        <p className="text-xs font-bold text-[#B0A090] mb-1.5">{day.day}</p>
-                        <div className="flex flex-col gap-1">
-                          {MEAL_SLOTS.map(({ key, label, emoji }) => (
-                            <div key={key} className="flex items-center gap-2 text-sm">
-                              <span className="text-xs w-4 flex-shrink-0">{emoji}</span>
-                              <span className="text-xs text-[#B0A090] w-6 flex-shrink-0">{label}</span>
-                              <span className="text-[#1E1810] truncate">{day[key].name}</span>
-                              <span className="text-xs text-[#B0A090] flex-shrink-0 ml-auto">~{day[key].calories}kcal</span>
+                    {MEAL_SLOTS.map(({ key, label }) => {
+                      const meal = selected.dayData[key]
+                      return (
+                        <div key={key}>
+                          <p className="text-[10px] font-bold text-[#B0A090] uppercase tracking-widest mb-1.5">{label}</p>
+                          <div className="bg-[#F5F0E4] rounded-xl px-4 py-3 border border-[#C8B99A]">
+                            <p className="text-sm font-bold text-[#1E1810]">{meal.name}</p>
+                            <p className="text-xs text-[#B0A090] mt-0.5">{meal.description}</p>
+                            <div className="flex items-center gap-3 mt-1.5">
+                              <span className="text-xs text-[#B0A090]">~{meal.calories}kcal</span>
+                              <span className="text-xs text-[#B0A090]">{meal.cookTime}분</span>
                             </div>
-                          ))}
+                          </div>
                         </div>
-                        {i < selectedPlan.plan.days.length - 1 && (
-                          <div className="mt-3 border-b border-[#E8DFD0]" />
-                        )}
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
+              ) : plans.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="font-bold text-[#7A6855]">아직 생성된 식단이 없어요</p>
+                  <p className="text-sm text-[#B0A090] mt-1">식단을 만들면 여기서 확인할 수 있어요</p>
+                </div>
               ) : (
-                plans.length === 0 ? (
-                  <div className="text-center py-12">
-                    <p className="text-4xl mb-3">📅</p>
-                    <p className="font-bold text-[#7A6855]">아직 생성된 식단이 없어요</p>
-                    <p className="text-sm text-[#B0A090] mt-1">식단을 만들면 여기서 확인할 수 있어요</p>
-                  </div>
-                ) : (
-                  <p className="text-center text-sm text-[#B0A090] py-4">
-                    🍱 표시된 날짜를 탭하면 식단을 볼 수 있어요
-                  </p>
-                )
+                <p className="text-center text-sm text-[#B0A090] py-4">
+                  날짜를 탭하면 그날 식단을 볼 수 있어요
+                </p>
               )}
             </>
           )}
