@@ -92,7 +92,13 @@ export default function Home() {
       </div>
 
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} onSuccess={() => setShowAuth(false)} />}
-      {showFridge && <FridgeManager onClose={() => setShowFridge(false)} />}
+      {showFridge && (
+        <FridgeManager
+          onClose={() => setShowFridge(false)}
+          user={user}
+          onLoginRequired={() => { setShowFridge(false); setShowAuth(true) }}
+        />
+      )}
       {showUserSheet && user && (
         <UserSheet
           user={user}

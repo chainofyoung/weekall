@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { INGREDIENTS_DATA } from '@/lib/ingredients-data'
-import { getShelfLife, getDaysLeft, getFreshStatus, SHELF_LIFE } from '@/lib/shelf-life-data'
+import { getShelfLife, getDaysLeft, getFreshStatus } from '@/lib/shelf-life-data'
+import { createClient } from '@/lib/supabase/client'
+import type { User } from '@supabase/supabase-js'
 
 interface FridgeItem {
   id: string
@@ -24,7 +26,6 @@ function FridgeCard({ item, onRemove }: { item: FridgeItem; onRemove: () => void
   const status = getFreshStatus(daysLeft, shelf.warningDays)
   const st = STATUS_STYLE[status]
 
-  // 신선도 바 너비 계산 (0~100%)
   const barPct = Math.max(0, Math.min(100, (daysLeft / shelf.days) * 100))
 
   const daysLeftLabel = daysLeft <= 0
@@ -38,7 +39,6 @@ function FridgeCard({ item, onRemove }: { item: FridgeItem; onRemove: () => void
 
   return (
     <div className={`bg-[#FFFDF6] border rounded-xl overflow-hidden transition-all ${st.border} shadow-[1px_1px_0_#C8B99A]`}>
-      {/* 메인 행 */}
       <button className="w-full text-left px-4 py-3 flex items-center gap-3" onClick={() => setOpen(!open)}>
         <span className="text-2xl leading-none flex-shrink-0">{item.emoji}</span>
         <div className="flex-1 min-w-0">
@@ -48,7 +48,6 @@ function FridgeCard({ item, onRemove }: { item: FridgeItem; onRemove: () => void
               {shelf.storage}
             </span>
           </div>
-          {/* 신선도 바 */}
           <div className="mt-1.5 h-1.5 bg-[#E8DFD0] rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all ${st.bar}`}
@@ -65,7 +64,6 @@ function FridgeCard({ item, onRemove }: { item: FridgeItem; onRemove: () => void
         <span className={`text-[#B0A090] text-xs flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>▾</span>
       </button>
 
-      {/* 상세 정보 */}
       {open && (
         <div className="px-4 pb-4 border-t border-[#E8DFD0]">
           <div className={`mt-3 p-3 rounded-xl border ${st.bg} ${st.border}`}>
@@ -92,51 +90,80 @@ function FridgeCard({ item, onRemove }: { item: FridgeItem; onRemove: () => void
 
 interface Props {
   onClose: () => void
+  user: User | null
+  onLoginRequired: () => void
 }
 
-export default function FridgeManager({ onClose }: Props) {
+export default function FridgeManager({ onClose, user, onLoginRequired }: Props) {
   const [items, setItems] = useState<FridgeItem[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [showSearch, setShowSearch] = useState(false)
   const [filter, setFilter] = useState<'all' | 'warning' | 'fresh'>('all')
+  const [loading, setLoading] = useState(true)
 
-  // localStorage에서 로드
+  // 로그인 안 된 경우 즉시 로그인 유도
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('weekall_fridge')
-      if (saved) setItems(JSON.parse(saved))
-    } catch {}
-  }, [])
-
-  const save = useCallback((next: FridgeItem[]) => {
-    setItems(next)
-    localStorage.setItem('weekall_fridge', JSON.stringify(next))
-  }, [])
-
-  function addItem(name: string, emoji: string) {
-    const existing = items.find(i => i.name === name)
-    if (existing) return  // 이미 있으면 무시
-    const item: FridgeItem = {
-      id: `fridge_${Date.now()}`,
-      name,
-      emoji,
-      addedAt: new Date().toISOString(),
+    if (!user) {
+      onLoginRequired()
+      onClose()
     }
-    save([...items, item])
+  }, [user, onLoginRequired, onClose])
+
+  // Supabase에서 로드
+  useEffect(() => {
+    if (!user) return
+    const supabase = createClient()
+    supabase
+      .from('fridge_items')
+      .select('*')
+      .order('added_at', { ascending: false })
+      .then(({ data }) => {
+        if (data) {
+          setItems(data.map(row => ({
+            id: row.id,
+            name: row.name,
+            emoji: row.emoji,
+            addedAt: row.added_at,
+          })))
+        }
+        setLoading(false)
+      })
+  }, [user])
+
+  // localStorage 동기화 (장보기 목록 등 다른 컴포넌트가 참조)
+  useEffect(() => {
+    localStorage.setItem('weekall_fridge', JSON.stringify(
+      items.map(i => ({ name: i.name, emoji: i.emoji, addedAt: i.addedAt }))
+    ))
+  }, [items])
+
+  const addItem = useCallback(async (name: string, emoji: string) => {
+    if (!user) return
+    if (items.find(i => i.name === name)) return
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('fridge_items')
+      .insert({ user_id: user.id, name, emoji })
+      .select()
+      .single()
+    if (!error && data) {
+      setItems(prev => [{ id: data.id, name: data.name, emoji: data.emoji, addedAt: data.added_at }, ...prev])
+    }
     setSearchQuery('')
     setShowSearch(false)
-  }
+  }, [user, items])
 
-  function removeItem(id: string) {
-    save(items.filter(i => i.id !== id))
-  }
+  const removeItem = useCallback(async (id: string) => {
+    if (!user) return
+    const supabase = createClient()
+    await supabase.from('fridge_items').delete().eq('id', id)
+    setItems(prev => prev.filter(i => i.id !== id))
+  }, [user])
 
-  // 검색 결과
   const searchResults = searchQuery.trim()
     ? INGREDIENTS_DATA.filter(i => i.name.includes(searchQuery.trim())).slice(0, 8)
     : []
 
-  // 필터링 + 상태별 정렬
   const sortedItems = [...items]
     .map(item => {
       const shelf = getShelfLife(item.name)
@@ -150,12 +177,10 @@ export default function FridgeManager({ onClose }: Props) {
       return true
     })
     .sort((a, b) => {
-      // 기한초과 → 주의 → 신선 순
       const order = { expired: 0, warning: 1, fresh: 2 }
       return order[a.status] - order[b.status] || a.daysLeft - b.daysLeft
     })
 
-  // 상태 카운트
   const counts = items.reduce((acc, item) => {
     const shelf = getShelfLife(item.name)
     const daysLeft = getDaysLeft(item.addedAt, shelf.days)
@@ -163,6 +188,8 @@ export default function FridgeManager({ onClose }: Props) {
     acc[status]++
     return acc
   }, { fresh: 0, warning: 0, expired: 0 })
+
+  if (!user) return null
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-[#F5F0E4]">
@@ -227,8 +254,12 @@ export default function FridgeManager({ onClose }: Props) {
             </div>
           )}
 
-          {items.length === 0 ? (
-            /* 빈 상태 */
+          {loading ? (
+            <div className="text-center py-16">
+              <p className="text-3xl mb-3 animate-pulse">🧊</p>
+              <p className="text-sm text-[#B0A090]">불러오는 중...</p>
+            </div>
+          ) : items.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-5xl mb-4">🧊</p>
               <p className="serif text-lg text-[#7A6855]">냉장고가 비어있어요</p>
